@@ -17,6 +17,7 @@ quirks of the data set, such as missing names and unknown diameters.
 
 You'll edit this file in Task 1.
 """
+
 from helpers import cd_to_datetime, datetime_to_str
 
 
@@ -32,6 +33,7 @@ class NearEarthObject:
     initialized to an empty collection, but eventually populated in the
     `NEODatabase` constructor.
     """
+
     # TODO: How can you, and should you, change the arguments to this constructor?
     # If you make changes, be sure to update the comments in this file.
     def __init__(self, **info):
@@ -44,9 +46,9 @@ class NearEarthObject:
         # You should coerce these values to their appropriate data type and
         # handle any edge cases, such as a empty name being represented by `None`
         # and a missing diameter being represented by `float('nan')`.
-        self.designation = ''
+        self.designation = ""
         self.name = None
-        self.diameter = float('nan')
+        self.diameter = float("nan")
         self.hazardous = False
 
         # Create an empty initial collection of linked approaches.
@@ -56,7 +58,7 @@ class NearEarthObject:
     def fullname(self):
         """Return a representation of the full name of this NEO."""
         # TODO: Use self.designation and self.name to build a fullname for this object.
-        return ''
+        return ""
 
     def __str__(self):
         """Return `str(self)`."""
@@ -67,8 +69,10 @@ class NearEarthObject:
 
     def __repr__(self):
         """Return `repr(self)`, a computer-readable string representation of this object."""
-        return f"NearEarthObject(designation={self.designation!r}, name={self.name!r}, " \
-               f"diameter={self.diameter:.3f}, hazardous={self.hazardous!r})"
+        return (
+            f"NearEarthObject(designation={self.designation!r}, name={self.name!r}, "
+            f"diameter={self.diameter:.3f}, hazardous={self.hazardous!r})"
+        )
 
 
 class CloseApproach:
@@ -84,6 +88,7 @@ class CloseApproach:
     private attribute, but the referenced NEO is eventually replaced in the
     `NEODatabase` constructor.
     """
+
     # TODO: How can you, and should you, change the arguments to this constructor?
     # If you make changes, be sure to update the comments in this file.
     def __init__(self, **info):
@@ -95,7 +100,7 @@ class CloseApproach:
         # onto attributes named `_designation`, `time`, `distance`, and `velocity`.
         # You should coerce these values to their appropriate data type and handle any edge cases.
         # The `cd_to_datetime` function will be useful.
-        self._designation = ''
+        self._designation = ""
         self.time = None  # TODO: Use the cd_to_datetime function for this attribute.
         self.distance = 0.0
         self.velocity = 0.0
@@ -119,7 +124,7 @@ class CloseApproach:
         # TODO: Use this object's `.time` attribute and the `datetime_to_str` function to
         # build a formatted representation of the approach time.
         # TODO: Use self.designation and self.name to build a fullname for this object.
-        return ''
+        return ""
 
     def __str__(self):
         """Return `str(self)`."""
@@ -130,5 +135,7 @@ class CloseApproach:
 
     def __repr__(self):
         """Return `repr(self)`, a computer-readable string representation of this object."""
-        return f"CloseApproach(time={self.time_str!r}, distance={self.distance:.2f}, " \
-               f"velocity={self.velocity:.2f}, neo={self.neo!r})"
+        return (
+            f"CloseApproach(time={self.time_str!r}, distance={self.distance:.2f}, "
+            f"velocity={self.velocity:.2f}, neo={self.neo!r})"
+        )

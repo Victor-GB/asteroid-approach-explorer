@@ -10,6 +10,7 @@ extension determines which of these functions is used.
 
 You'll edit this file in Part 4.
 """
+
 import csv
 import json
 
@@ -25,8 +26,13 @@ def write_to_csv(results, filename):
     :param filename: A Path-like object pointing to where the data should be saved.
     """
     fieldnames = (
-        'datetime_utc', 'distance_au', 'velocity_km_s',
-        'designation', 'name', 'diameter_km', 'potentially_hazardous'
+        "datetime_utc",
+        "distance_au",
+        "velocity_km_s",
+        "designation",
+        "name",
+        "diameter_km",
+        "potentially_hazardous",
     )
     # TODO: Write the results to a CSV file, following the specification in the instructions.
 
