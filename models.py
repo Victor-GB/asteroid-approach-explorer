@@ -64,7 +64,7 @@ class NearEarthObject:
         """Return `str(self)`."""
         # The project instructions include one possibility. Peek at the __repr__
         # method for examples of advanced string formatting.
-        return f"A NearEarthObject {self.fullname}: diameter={self.diameter:.3f} km, "
+        return f"A NearEarthObject {self.fullname}: diameter={self.diameter:.3f} km. "
 
     def __repr__(self) -> str:
         """Return `repr(self)`, a computer-readable string representation of this object."""
@@ -72,6 +72,15 @@ class NearEarthObject:
             f"NearEarthObject(designation={self.designation!r}, name={self.name!r}, "
             f"diameter={self.diameter:.3f}, hazardous={self.hazardous!r})"
         )
+
+    def serialize(self) -> dict[str, str | float | bool]:
+        """Return NEO fields for CSV and JSON export."""
+        return {
+            "designation": self.designation,
+            "name": self.name or "",
+            "diameter_km": self.diameter,
+            "potentially_hazardous": self.hazardous,
+        }
 
 
 class CloseApproach:
@@ -136,3 +145,11 @@ class CloseApproach:
             f"CloseApproach(time={self.time_str!r}, distance={self.distance:.2f}, "
             f"velocity={self.velocity:.2f}, neo={self.neo!r})"
         )
+
+    def serialize(self) -> dict[str, str | float | bool]:
+        """Return close approach fields for CSV and JSON export."""
+        return {
+            "datetime_utc": self.time_str,
+            "distance_au": self.distance,
+            "velocity_km_s": self.velocity,
+        }
