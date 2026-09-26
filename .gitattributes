@@ -18,3 +18,5 @@
 *.jpeg binary
 *.gif binary
 *.zip binary
+
+tests/test-neos-2020.csv -text
