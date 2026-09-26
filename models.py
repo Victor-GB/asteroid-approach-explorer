@@ -18,6 +18,8 @@ quirks of the data set, such as missing names and unknown diameters.
 You'll edit this file in Task 1.
 """
 
+from datetime import datetime
+
 from helpers import cd_to_datetime, datetime_to_str
 
 
@@ -107,12 +109,12 @@ class CloseApproach:
         # You should coerce these values to their appropriate data type and handle any edge cases.
         # The `cd_to_datetime` function will be useful.
         self._designation = info["des"]
-        self.time = cd_to_datetime(info["cd"])
+        self.time: datetime = cd_to_datetime(info["cd"])
         self.distance = float(info["dist"])
         self.velocity = float(info["v_rel"])
 
         # Create an attribute for the referenced NEO, originally None.
-        self.neo = None
+        self.neo: NearEarthObject | None = None
 
     @property
     def time_str(self) -> str:

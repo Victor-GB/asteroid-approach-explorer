@@ -12,6 +12,10 @@ data on NEOs and close approaches extracted by `extract.load_neos` and
 You'll edit this file in Tasks 2 and 3.
 """
 
+from collections.abc import Callable, Collection, Iterable, Iterator
+
+from models import CloseApproach, NearEarthObject
+
 
 class NEODatabase:
     """A database of near-Earth objects and their close approaches.
@@ -22,7 +26,9 @@ class NEODatabase:
     querying for close approaches that match criteria.
     """
 
-    def __init__(self, neos, approaches):
+    def __init__(
+        self, neos: Collection[NearEarthObject], approaches: Collection[CloseApproach]
+    ) -> None:
         """Create a new `NEODatabase`.
 
         As a precondition, this constructor assumes that the collections of NEOs
@@ -48,7 +54,7 @@ class NEODatabase:
             approach.neo = self._neos_by_designation[approach._designation]
             approach.neo.approaches.append(approach)
 
-    def get_neo_by_designation(self, designation):
+    def get_neo_by_designation(self, designation: str) -> NearEarthObject | None:
         """Find and return an NEO by its primary designation.
 
         If no match is found, return `None` instead.
@@ -63,7 +69,7 @@ class NEODatabase:
         """
         return self._neos_by_designation.get(designation)
 
-    def get_neo_by_name(self, name):
+    def get_neo_by_name(self, name: str) -> NearEarthObject | None:
         """Find and return an NEO by its name.
 
         If no match is found, return `None` instead.
@@ -79,7 +85,9 @@ class NEODatabase:
         """
         return self._neos_by_name.get(name)
 
-    def query(self, filters=()):
+    def query(
+        self, filters: Iterable[Callable[[CloseApproach], bool]] = ()
+    ) -> Iterator[CloseApproach]:
         """Query close approaches to generate those that match a collection of filters.
 
         This generates a stream of `CloseApproach` objects that match all of the

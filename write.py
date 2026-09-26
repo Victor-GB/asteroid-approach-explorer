@@ -13,9 +13,15 @@ You'll edit this file in Part 4.
 
 import csv
 import json
+from collections.abc import Iterable
+from os import PathLike
+
+from models import CloseApproach
 
 
-def write_to_csv(results, filename):
+def write_to_csv(
+    results: Iterable[CloseApproach], filename: str | PathLike[str]
+) -> None:
     """Write an iterable of `CloseApproach` objects to a CSV file.
 
     The precise output specification is in `README.md`. Roughly, each output row
@@ -39,11 +45,14 @@ def write_to_csv(results, filename):
         writer.writeheader()
         for approach in results:
             row = approach.serialize()
+            assert approach.neo is not None, "CloseApproach object has no linked NEO."
             row.update(approach.neo.serialize())
             writer.writerow(row)
 
 
-def write_to_json(results, filename):
+def write_to_json(
+    results: Iterable[CloseApproach], filename: str | PathLike[str]
+) -> None:
     """Write an iterable of `CloseApproach` objects to a JSON file.
 
     The precise output specification is in `README.md`. Roughly, the output is a
@@ -56,7 +65,8 @@ def write_to_json(results, filename):
     """
     entries = []
     for approach in results:
-        entry = approach.serialize()
+        entry: dict[str, object] = {**approach.serialize()}
+        assert approach.neo is not None, "CloseApproach object has no linked NEO."
         entry["neo"] = approach.neo.serialize()
         entries.append(entry)
     with open(filename, "w", encoding="utf-8") as json_file:
