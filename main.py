@@ -40,6 +40,8 @@ If needed, the script can load data from data files other than the default with
 import argparse
 import cmd
 import datetime
+import json
+import math
 import pathlib
 import shlex
 import sys
@@ -73,6 +75,62 @@ def date_fromisoformat(date_string):
         raise argparse.ArgumentTypeError(
             f"'{date_string}' is not a valid date. Use YYYY-MM-DD."
         ) from error
+
+
+def non_negative_float(value: str) -> float:
+    """Convert text to finite, non-negative float."""
+    message = f"'{value}' must be a finite, non-negative number."
+    try:
+        number = float(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(message) from error
+    if not math.isfinite(number) or number < 0:
+        raise argparse.ArgumentTypeError(message)
+    return number
+
+
+def non_negative_int(value: str) -> int:
+    """Convert text to finite, non-negative integer."""
+    message = f"'{value}' must be a finite, non-negative integer."
+    try:
+        number = int(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(message) from error
+    if number < 0:
+        raise argparse.ArgumentTypeError(message)
+    return number
+
+
+def validate_query_args(args: argparse.Namespace) -> None:
+    """Check that query argument combinations are valid."""
+    if (
+        args.start_date is not None
+        and args.end_date is not None
+        and args.start_date > args.end_date
+    ):
+        raise ValueError("--start-date must be on or before --end-date.")
+    if (
+        args.distance_min is not None
+        and args.distance_max is not None
+        and args.distance_min > args.distance_max
+    ):
+        raise ValueError("--min-distance must be less than or equal to --max-distance.")
+
+    if (
+        args.velocity_min is not None
+        and args.velocity_max is not None
+        and args.velocity_min > args.velocity_max
+    ):
+        raise ValueError("--min-velocity must be less than or equal to --max-velocity.")
+
+    if (
+        args.diameter_min is not None
+        and args.diameter_max is not None
+        and args.diameter_min > args.diameter_max
+    ):
+        raise ValueError("--min-diameter must be less than or equal to --max-diameter.")
+    if args.outfile is not None and args.outfile.suffix not in (".csv", ".json"):
+        raise ValueError("--outfile must end with .csv or .json.")
 
 
 def make_parser():
@@ -153,21 +211,21 @@ def make_parser():
     filters.add_argument(
         "--min-distance",
         dest="distance_min",
-        type=float,
+        type=non_negative_float,
         help="In astronomical units. Only return close approaches that "
         "pass as far or farther away from Earth as the given distance.",
     )
     filters.add_argument(
         "--max-distance",
         dest="distance_max",
-        type=float,
+        type=non_negative_float,
         help="In astronomical units. Only return close approaches that "
         "pass as near or nearer to Earth as the given distance.",
     )
     filters.add_argument(
         "--min-velocity",
         dest="velocity_min",
-        type=float,
+        type=non_negative_float,
         help="In kilometers per second. Only return close approaches "
         "whose relative velocity to Earth at approach is as fast or faster "
         "than the given velocity.",
@@ -175,7 +233,7 @@ def make_parser():
     filters.add_argument(
         "--max-velocity",
         dest="velocity_max",
-        type=float,
+        type=non_negative_float,
         help="In kilometers per second. Only return close approaches "
         "whose relative velocity to Earth at approach is as slow or slower "
         "than the given velocity.",
@@ -183,14 +241,14 @@ def make_parser():
     filters.add_argument(
         "--min-diameter",
         dest="diameter_min",
-        type=float,
+        type=non_negative_float,
         help="In kilometers. Only return close approaches of NEOs with "
         "diameters as large or larger than the given size.",
     )
     filters.add_argument(
         "--max-diameter",
         dest="diameter_max",
-        type=float,
+        type=non_negative_float,
         help="In kilometers. Only return close approaches of NEOs with "
         "diameters as small or smaller than the given size.",
     )
@@ -213,7 +271,7 @@ def make_parser():
     query.add_argument(
         "-l",
         "--limit",
-        type=int,
+        type=non_negative_int,
         help="The maximum number of matches to return. "
         "Defaults to 10 if no --outfile is given.",
     )
@@ -447,9 +505,18 @@ class NEOShell(cmd.Cmd):
         args = self.parse_arg_with(arg, self.query)
         if not args:
             return
+        try:
+            validate_query_args(args)
+        except ValueError as error:
+            print(f"error: {error}", file=sys.stderr)
+            return
 
         # Run the `inspect` subcommand.
-        query(self.db, args)
+        try:
+            query(self.db, args)
+        except OSError as err:
+            print(f"error: Could not write query results: {err}", file=sys.stderr)
+            return
 
     def do_EOF(self, _arg):
         """Exit the interactive session."""
@@ -486,15 +553,33 @@ def main():
     """Run the main script."""
     parser, inspect_parser, query_parser = make_parser()
     args = parser.parse_args()
+    if args.cmd == "query":
+        try:
+            validate_query_args(args)
+        except ValueError as error:
+            query_parser.error(str(error))
 
     # Extract data from the data files into structured Python objects.
-    database = NEODatabase(load_neos(args.neofile), load_approaches(args.cadfile))
+    try:
+        neos = load_neos(args.neofile)
+        approaches = load_approaches(args.cadfile)
+    except OSError as error:
+        parser.error(f"Could not read input data: {error}")
+    except json.JSONDecodeError as error:
+        parser.error(f"Invalid JSON in '{args.cadfile}': {error.msg}")
+    except ValueError as error:
+        parser.error(f"Invalid input data : {error}")
+
+    database = NEODatabase(neos, approaches)
 
     # Run the chosen subcommand.
     if args.cmd == "inspect":
         inspect(database, pdes=args.pdes, name=args.name, verbose=args.verbose)
     elif args.cmd == "query":
-        query(database, args)
+        try:
+            query(database, args)
+        except OSError as error:
+            query_parser.error(f"Could not write query results: {error}")
     elif args.cmd == "interactive":
         NEOShell(
             database, inspect_parser, query_parser, aggressive=args.aggressive
