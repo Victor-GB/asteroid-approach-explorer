@@ -18,6 +18,7 @@ import unittest
 
 from extract import load_neos, load_approaches
 from models import NearEarthObject, CloseApproach
+from typing import ClassVar,cast
 
 
 TESTS_ROOT = (pathlib.Path(__file__).parent).resolve()
@@ -26,31 +27,33 @@ TEST_CAD_FILE = TESTS_ROOT / 'test-cad-2020.json'
 
 
 class TestLoadNEOs(unittest.TestCase):
+    neos_by_designation:ClassVar[dict[str,NearEarthObject]]
+    neos: ClassVar[list[NearEarthObject]]
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls)->None:
         cls.neos = load_neos(TEST_NEO_FILE)
         cls.neos_by_designation = {neo.designation: neo for neo in cls.neos}
 
     @classmethod
-    def get_first_neo_or_none(cls):
+    def get_first_neo_or_none(cls)->NearEarthObject | None:
         try:
             # Don't use __getitem__ in case the object is a set or a stream.
             return next(iter(cls.neos))
         except StopIteration:
             return None
 
-    def test_neos_are_collection(self):
+    def test_neos_are_collection(self)-> None:
         self.assertIsInstance(self.neos, collections.abc.Collection)
 
-    def test_neos_contain_near_earth_objects(self):
+    def test_neos_contain_near_earth_objects(self)-> None:
         neo = self.get_first_neo_or_none()
         self.assertIsNotNone(neo)
         self.assertIsInstance(neo, NearEarthObject)
 
-    def test_neos_contain_all_elements(self):
+    def test_neos_contain_all_elements(self)-> None:
         self.assertEqual(len(self.neos), 4226)
 
-    def test_neos_contain_2019_SC8_no_name_no_diameter(self):
+    def test_neos_contain_2019_SC8_no_name_no_diameter(self)-> None:
         self.assertIn('2019 SC8', self.neos_by_designation)
         neo = self.neos_by_designation['2019 SC8']
 
@@ -59,7 +62,7 @@ class TestLoadNEOs(unittest.TestCase):
         self.assertTrue(math.isnan(neo.diameter))
         self.assertEqual(neo.hazardous, False)
 
-    def test_asclepius_has_name_no_diameter(self):
+    def test_asclepius_has_name_no_diameter(self)-> None:
         self.assertIn('4581', self.neos_by_designation)
         neo = self.neos_by_designation['4581']
 
@@ -68,7 +71,7 @@ class TestLoadNEOs(unittest.TestCase):
         self.assertTrue(math.isnan(neo.diameter))
         self.assertEqual(neo.hazardous, True)
 
-    def test_adonis_is_potentially_hazardous(self):
+    def test_adonis_is_potentially_hazardous(self)-> None:
         self.assertIn('2101', self.neos_by_designation)
         neo = self.neos_by_designation['2101']
 
@@ -79,42 +82,47 @@ class TestLoadNEOs(unittest.TestCase):
 
 
 class TestLoadApproaches(unittest.TestCase):
+    approaches: ClassVar[list[CloseApproach]]
+
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls)-> None:
         cls.approaches = load_approaches(TEST_CAD_FILE)
 
     @classmethod
-    def get_first_approach_or_none(cls):
+    def get_first_approach_or_none(cls)->CloseApproach | None:
         try:
             # Don't __getitem__, in case it's a set or a stream.
             return next(iter(cls.approaches))
         except StopIteration:
             return None
 
-    def test_approaches_are_collection(self):
+    def test_approaches_are_collection(self)-> None:
         self.assertIsInstance(self.approaches, collections.abc.Collection)
 
-    def test_approaches_contain_close_approaches(self):
+    def test_approaches_contain_close_approaches(self)-> None:
         approach = self.get_first_approach_or_none()
         self.assertIsNotNone(approach)
         self.assertIsInstance(approach, CloseApproach)
 
-    def test_approaches_contain_all_elements(self):
+    def test_approaches_contain_all_elements(self)-> None:
         self.assertEqual(len(self.approaches), 4700)
 
-    def test_approach_time_is_datetime(self):
+    def test_approach_time_is_datetime(self)-> None:
         approach = self.get_first_approach_or_none()
         self.assertIsNotNone(approach)
+        approach=cast(CloseApproach,approach)
         self.assertIsInstance(approach.time, datetime.datetime)
 
-    def test_approach_distance_is_float(self):
+    def test_approach_distance_is_float(self)-> None:
         approach = self.get_first_approach_or_none()
         self.assertIsNotNone(approach)
+        approach=cast(CloseApproach,approach)
         self.assertIsInstance(approach.distance, float)
 
-    def test_approach_velocity_is_float(self):
+    def test_approach_velocity_is_float(self)-> None:
         approach = self.get_first_approach_or_none()
         self.assertIsNotNone(approach)
+        approach=cast(CloseApproach,approach)
         self.assertIsInstance(approach.velocity, float)
 
 

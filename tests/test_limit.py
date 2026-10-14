@@ -16,32 +16,32 @@ from filters import limit
 
 
 class TestLimit(unittest.TestCase):
-    def setUp(self):
+    def setUp(self)-> None:
         self.iterable = tuple(range(5))
 
-    def test_limit_iterable_with_limit(self):
+    def test_limit_iterable_with_limit(self)-> None:
         self.assertEqual(tuple(limit(self.iterable, 3)), (0, 1, 2))
 
-    def test_limit_iterable_without_limit(self):
+    def test_limit_iterable_without_limit(self)-> None:
         self.assertEqual(tuple(limit(self.iterable)), (0, 1, 2, 3, 4))
         self.assertEqual(tuple(limit(self.iterable, 0)), (0, 1, 2, 3, 4))
         self.assertEqual(tuple(limit(self.iterable, None)), (0, 1, 2, 3, 4))
 
-    def test_limit_iterator_with_smaller_limit(self):
+    def test_limit_iterator_with_smaller_limit(self)-> None:
         self.assertEqual(tuple(limit(iter(self.iterable), 3)), (0, 1, 2))
 
-    def test_limit_iterator_with_matching_limit(self):
+    def test_limit_iterator_with_matching_limit(self)-> None:
         self.assertEqual(tuple(limit(iter(self.iterable), 5)), (0, 1, 2, 3, 4))
 
-    def test_limit_iterator_with_larger_limit(self):
+    def test_limit_iterator_with_larger_limit(self)-> None:
         self.assertEqual(tuple(limit(iter(self.iterable), 10)), (0, 1, 2, 3, 4))
 
-    def test_limit_iterator_without_limit(self):
+    def test_limit_iterator_without_limit(self)-> None:
         self.assertEqual(tuple(limit(iter(self.iterable))), (0, 1, 2, 3, 4))
         self.assertEqual(tuple(limit(iter(self.iterable), 0)), (0, 1, 2, 3, 4))
         self.assertEqual(tuple(limit(iter(self.iterable), None)), (0, 1, 2, 3, 4))
 
-    def test_limit_produces_an_iterable(self):
+    def test_limit_produces_an_iterable(self)-> None:
         self.assertIsInstance(limit(self.iterable, 3), collections.abc.Iterable)
         self.assertIsInstance(limit(self.iterable, 5), collections.abc.Iterable)
         self.assertIsInstance(limit(self.iterable, 10), collections.abc.Iterable)

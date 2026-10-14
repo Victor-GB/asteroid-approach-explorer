@@ -18,7 +18,7 @@ You'll edit this file in Tasks 3a and 3c.
 """
 
 import operator
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable
 from datetime import date
 from itertools import islice
 from typing import Any
@@ -197,7 +197,7 @@ def create_filters(
     return filters
 
 
-def limit[T](iterator: Iterator[T], n: int | None = None) -> Iterator[T]:
+def limit[T](iterator: Iterable[T], n: int | None = None) -> Iterable[T]:
     """Produce a limited stream of values from an iterator.
 
     If `n` is 0 or None, don't limit the iterator at all.
