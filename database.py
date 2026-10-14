@@ -48,10 +48,16 @@ class NEODatabase:
         """
         self._neos = neos
         self._approaches = approaches
-        self._neos_by_designation = {neo.designation: neo for neo in self._neos}
-        self._neos_by_name = {neo.name: neo for neo in self._neos if neo.name}
+        self._neos_by_designation = {
+            neo.designation.strip().casefold(): neo for neo in self._neos
+        }
+        self._neos_by_name = {
+            neo.name.strip().casefold(): neo for neo in self._neos if neo.name
+        }
         for approach in self._approaches:
-            approach.neo = self._neos_by_designation[approach._designation]
+            approach.neo = self._neos_by_designation[
+                approach._designation.strip().casefold()
+            ]
             approach.neo.approaches.append(approach)
 
     def get_neo_by_designation(self, designation: str) -> NearEarthObject | None:
@@ -61,13 +67,14 @@ class NEODatabase:
 
         Each NEO in the data set has a unique primary designation, as a string.
 
-        The matching is exact - check for spelling and capitalization if no
-        match is found.
+        Matching ignores case and surrounding whitespace.
 
         :param designation: The primary designation of the NEO to search for.
         :return: The `NearEarthObject` with the desired primary designation, or `None`.
         """
-        return self._neos_by_designation.get(designation)
+        if designation is None:
+            return
+        return self._neos_by_designation.get(designation.strip().casefold())
 
     def get_neo_by_name(self, name: str) -> NearEarthObject | None:
         """Find and return an NEO by its name.
@@ -77,13 +84,14 @@ class NEODatabase:
         Not every NEO in the data set has a name. No NEOs are associated with
         the empty string nor with the `None` singleton.
 
-        The matching is exact - check for spelling and capitalization if no
-        match is found.
+        Matching ignores case and surrounding whitespace.
 
         :param name: The name, as a string, of the NEO to search for.
         :return: The `NearEarthObject` with the desired name, or `None`.
         """
-        return self._neos_by_name.get(name)
+        if not name:
+            return None
+        return self._neos_by_name.get(name.strip().casefold())
 
     def query(
         self, filters: Iterable[Callable[[CloseApproach], bool]] = ()
