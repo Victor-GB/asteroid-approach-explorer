@@ -63,11 +63,14 @@ def write_to_json(
     :param results: An iterable of `CloseApproach` objects.
     :param filename: A Path-like object pointing to where the data should be saved.
     """
-    entries = []
-    for approach in results:
-        entry: dict[str, object] = {**approach.serialize()}
-        assert approach.neo is not None, "CloseApproach object has no linked NEO."
-        entry["neo"] = approach.neo.serialize()
-        entries.append(entry)
     with open(filename, "w", encoding="utf-8") as json_file:
-        json.dump(entries, json_file)
+        json_file.write("[")
+        for index, approach in enumerate(results):
+            if index > 0:
+                json_file.write(", ")
+            entry: dict[str, object] = {**approach.serialize()}
+            assert approach.neo is not None, "CloseApproach object has no linked NEO."
+            entry["neo"] = approach.neo.serialize()
+            json.dump(entry, json_file)
+
+        json_file.write("]")
