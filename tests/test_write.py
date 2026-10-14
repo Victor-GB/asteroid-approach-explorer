@@ -24,7 +24,11 @@ import pathlib
 import unittest
 import unittest.mock
 
+from collections.abc import Iterator
+from typing import ClassVar
 
+from models import CloseApproach
+from unittest.mock import MagicMock
 from extract import load_neos, load_approaches
 from database import NEODatabase
 from write import write_to_csv, write_to_json
@@ -35,7 +39,7 @@ TEST_NEO_FILE = TESTS_ROOT / 'test-neos-2020.csv'
 TEST_CAD_FILE = TESTS_ROOT / 'test-cad-2020.json'
 
 
-def build_results(n):
+def build_results(n:int)->tuple[CloseApproach,...]:
     neos = tuple(load_neos(TEST_NEO_FILE))
     approaches = tuple(load_approaches(TEST_CAD_FILE))
 
@@ -45,36 +49,27 @@ def build_results(n):
     return approaches[:n]
 
 
-@contextlib.contextmanager
-def UncloseableStringIO(value=''):
-    """A context manager for an uncloseable `io.StringIO`.
 
-    This produces an almost-normal `io.StringIO`, except the `close` method has
-    been patched out with a no-op. The context manager takes care of restoring
-    the monkeypatch and closing the buffer, but this prevents other nested
-    context managers (such as `open` from the implementation of `write_to_*`)
-    from preemptively closing the `StringIO` before we can rewind it and read
-    its value.
-    """
-    buf = io.StringIO(value)
-    buf._close = buf.close
-    buf.close = lambda: False
-    yield buf
-    buf.close = buf._close
-    delattr(buf, '_close')
-    buf.close()
+
+@contextlib.contextmanager
+def UncloseableStringIO(value: str = "") -> Iterator[io.StringIO]:
+    """Keep an in-memory buffer open while the writer uses it."""
+    with io.StringIO(value) as buf:
+        with unittest.mock.patch.object(buf, "close"):
+            yield buf
 
 
 class TestWriteToCSV(unittest.TestCase):
+    value: ClassVar[str]
     @classmethod
     @unittest.mock.patch('write.open')
-    def setUpClass(cls, mock_file):
+    def setUpClass(cls, mock_file:MagicMock)->None:
         results = build_results(5)
 
         with UncloseableStringIO() as buf:
             mock_file.return_value = buf
             try:
-                write_to_csv(results, None)
+                write_to_csv(results, "unused.csv")
             except csv.Error as err:
                 raise cls.failureException("Unable to write results to CSV.") from err
             except ValueError as err:
@@ -84,7 +79,7 @@ class TestWriteToCSV(unittest.TestCase):
                 buf.seek(0)
                 cls.value = buf.getvalue()
 
-    def test_csv_data_is_well_formed(self):
+    def test_csv_data_is_well_formed(self) -> None :
         # Now, we have the value in memory, and can _actually_ start testing.
         buf = io.StringIO(self.value)
 
@@ -95,7 +90,7 @@ class TestWriteToCSV(unittest.TestCase):
         except csv.Error as err:
             raise self.failureException("write_to_csv produced an invalid CSV format.") from err
 
-    def test_csv_data_has_header(self):
+    def test_csv_data_has_header(self) -> None :
         try:
             self.assertTrue(csv.Sniffer().has_header(self.value))
             return
@@ -103,7 +98,7 @@ class TestWriteToCSV(unittest.TestCase):
             raise self.failureException("Unable to sniff for headers.") from err
 
 
-    def test_csv_data_has_five_rows(self):
+    def test_csv_data_has_five_rows(self) -> None :
         # Now, we have the value in memory, and can _actually_ start testing.
         buf = io.StringIO(self.value)
 
@@ -116,7 +111,7 @@ class TestWriteToCSV(unittest.TestCase):
 
         self.assertEqual(len(rows), 5)
 
-    def test_csv_data_header_matches_requirements(self):
+    def test_csv_data_header_matches_requirements(self) -> None :
         # Now, we have the value in memory, and can _actually_ start testing.
         buf = io.StringIO(self.value)
 
@@ -133,15 +128,16 @@ class TestWriteToCSV(unittest.TestCase):
 
 
 class TestWriteToJSON(unittest.TestCase):
+    value: ClassVar[str]
     @classmethod
     @unittest.mock.patch('write.open')
-    def setUpClass(cls, mock_file):
+    def setUpClass(cls, mock_file: MagicMock)->None:
         results = build_results(5)
 
         with UncloseableStringIO() as buf:
             mock_file.return_value = buf
             try:
-                write_to_json(results, None)
+                write_to_json(results, "unused.json")
             except csv.Error as err:
                 raise cls.failureException("Unable to write results to CSV.") from err
             except ValueError as err:
@@ -151,7 +147,7 @@ class TestWriteToJSON(unittest.TestCase):
                 buf.seek(0)
                 cls.value = buf.getvalue()
 
-    def test_json_data_is_well_formed(self):
+    def test_json_data_is_well_formed(self) -> None :
         # Now, we have the value in memory, and can _actually_ start testing.
         buf = io.StringIO(self.value)
         try:
@@ -159,7 +155,7 @@ class TestWriteToJSON(unittest.TestCase):
         except json.JSONDecodeError as err:
             raise self.failureException("write_to_json produced an invalid JSON document") from err
 
-    def test_json_data_is_a_sequence(self):
+    def test_json_data_is_a_sequence(self) -> None :
         buf = io.StringIO(self.value)
         try:
             data = json.load(buf)
@@ -167,7 +163,7 @@ class TestWriteToJSON(unittest.TestCase):
             raise self.failureException("write_to_json produced an invalid JSON document") from err
         self.assertIsInstance(data, collections.abc.Sequence)
 
-    def test_json_data_has_five_elements(self):
+    def test_json_data_has_five_elements(self) -> None :
         buf = io.StringIO(self.value)
         try:
             data = json.load(buf)
@@ -175,7 +171,7 @@ class TestWriteToJSON(unittest.TestCase):
             raise self.failureException("write_to_json produced an invalid JSON document") from err
         self.assertEqual(len(data), 5)
 
-    def test_json_element_is_associative(self):
+    def test_json_element_is_associative(self) -> None :
         buf = io.StringIO(self.value)
         try:
             data = json.load(buf)
@@ -185,7 +181,7 @@ class TestWriteToJSON(unittest.TestCase):
         approach = data[0]
         self.assertIsInstance(approach, collections.abc.Mapping)
 
-    def test_json_element_has_nested_attributes(self):
+    def test_json_element_has_nested_attributes(self) -> None :
         buf = io.StringIO(self.value)
         try:
             data = json.load(buf)
@@ -203,7 +199,7 @@ class TestWriteToJSON(unittest.TestCase):
         self.assertIn('diameter_km', neo)
         self.assertIn('potentially_hazardous', neo)
 
-    def test_json_element_decodes_to_correct_types(self):
+    def test_json_element_decodes_to_correct_types(self) -> None :
         buf = io.StringIO(self.value)
         try:
             data = json.load(buf)

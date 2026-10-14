@@ -26,7 +26,7 @@ import unittest
 class TestPythonVersion(unittest.TestCase):
     """Check that the Python version is >= 3.6."""
 
-    def test_python_version_is_at_least_3_6(self):
+    def test_python_version_is_at_least_3_6(self)-> None:
         self.assertTrue(sys.version_info >= (3, 6),
                         msg="""Unsupported Python version.
 

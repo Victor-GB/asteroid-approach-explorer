@@ -46,10 +46,14 @@ import pathlib
 import shlex
 import sys
 import time
+from argparse import ArgumentParser, Namespace
+from datetime import date
+from typing import Any
 
 from database import NEODatabase
 from extract import load_approaches, load_neos
 from filters import create_filters, limit
+from models import NearEarthObject
 from write import write_to_csv, write_to_json
 
 # Paths to the root of the project and the `data` subfolder.
@@ -60,7 +64,7 @@ DATA_ROOT = PROJECT_ROOT / "data"
 _START = time.time()
 
 
-def date_fromisoformat(date_string):
+def date_fromisoformat(date_string: str) -> date:
     """Return a `datetime.date` corresponding to a string in YYYY-MM-DD format.
 
     In Python 3.7+, there is `datetime.date.fromisoformat`, but alas - we're
@@ -133,7 +137,7 @@ def validate_query_args(args: argparse.Namespace) -> None:
         raise ValueError("--outfile must end with .csv or .json.")
 
 
-def make_parser():
+def make_parser() -> tuple[ArgumentParser, ArgumentParser, ArgumentParser]:
     """Create an ArgumentParser for this script.
 
     :return: A tuple of the top-level, inspect, and query parsers.
@@ -297,7 +301,12 @@ def make_parser():
     return parser, inspect, query
 
 
-def inspect(database, pdes=None, name=None, verbose=False):
+def inspect(
+    database: NEODatabase,
+    pdes: str | None = None,
+    name: str | None = None,
+    verbose: bool = False,
+) -> NearEarthObject | None:
     """Perform the `inspect` subcommand.
 
     This function fetches an NEO by designation or by name. If a matching NEO is
@@ -317,8 +326,10 @@ def inspect(database, pdes=None, name=None, verbose=False):
     # Fetch the NEO of interest.
     if pdes:
         neo = database.get_neo_by_designation(pdes)
-    else:
+    elif name is not None:
         neo = database.get_neo_by_name(name)
+    else:
+        neo = None
 
     # Ensure that we have received an NEO.
     if not neo:
@@ -333,7 +344,7 @@ def inspect(database, pdes=None, name=None, verbose=False):
     return neo
 
 
-def query(database, args):
+def query(database: NEODatabase, args: argparse.Namespace) -> None:
     """Perform the `query` subcommand.
 
     Create a collection of filters with `create_filters` and supply them to the
@@ -408,8 +419,13 @@ class NEOShell(cmd.Cmd):
     prompt = "(neo) "
 
     def __init__(
-        self, database, inspect_parser, query_parser, aggressive=False, **kwargs
-    ):
+        self,
+        database: NEODatabase,
+        inspect_parser: ArgumentParser,
+        query_parser: ArgumentParser,
+        aggressive: bool = False,
+        **kwargs: Any,
+    ) -> None:
         """Create a new `NEOShell`.
 
         Creating this object doesn't start the session - for that, use `.cmdloop()`.
@@ -427,7 +443,7 @@ class NEOShell(cmd.Cmd):
         self.aggressive = aggressive
 
     @classmethod
-    def parse_arg_with(cls, arg, parser):
+    def parse_arg_with(cls, arg: str, parser: ArgumentParser) -> Namespace | None:
         """Parse the additional text passed to a command, using a given parser.
 
         If any error is encountered (in lexical parsing or argument parsing),
@@ -453,11 +469,11 @@ class NEOShell(cmd.Cmd):
             # method which prints the error message and then calls `sys.exit`.
             return None
 
-    def do_i(self, arg):
+    def do_i(self, arg: str) -> None:
         """Shorthand for `inspect`."""
         self.do_inspect(arg)
 
-    def do_inspect(self, arg):
+    def do_inspect(self, arg: str) -> None:
         """Perform the `inspect` subcommand within the REPL session.
 
         Inspect an NEO by designation or by name:
@@ -476,11 +492,11 @@ class NEOShell(cmd.Cmd):
         # Run the `inspect` subcommand.
         inspect(self.db, pdes=args.pdes, name=args.name, verbose=args.verbose)
 
-    def do_q(self, arg):
+    def do_q(self, arg: str) -> None:
         """Shorthand for `query`."""
         self.do_query(arg)
 
-    def do_query(self, arg):
+    def do_query(self, arg: str) -> None:
         """Perform the `query` subcommand within the REPL session.
 
         This command behaves the same as the `query` subcommand from the command
@@ -518,7 +534,7 @@ class NEOShell(cmd.Cmd):
             print(f"error: Could not write query results: {err}", file=sys.stderr)
             return
 
-    def do_EOF(self, _arg):
+    def do_EOF(self, _arg: str) -> bool:
         """Exit the interactive session."""
         return True
 
@@ -526,7 +542,7 @@ class NEOShell(cmd.Cmd):
     do_exit = do_EOF
     do_quit = do_EOF
 
-    def precmd(self, line):
+    def precmd(self, line: str) -> str:
         """Watch for changes to the files in this project."""
         changed = [f for f in PROJECT_ROOT.glob("*.py") if f.stat().st_mtime > _START]
         if changed:
@@ -549,7 +565,7 @@ class NEOShell(cmd.Cmd):
         return line
 
 
-def main():
+def main() -> None:
     """Run the main script."""
     parser, inspect_parser, query_parser = make_parser()
     args = parser.parse_args()

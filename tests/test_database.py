@@ -14,6 +14,9 @@ import pathlib
 import math
 import unittest
 
+from typing import ClassVar, cast
+
+from models import CloseApproach, NearEarthObject
 
 from extract import load_neos, load_approaches
 from database import NEODatabase
@@ -26,27 +29,31 @@ TEST_CAD_FILE = TESTS_ROOT / 'test-cad-2020.json'
 
 
 class TestDatabase(unittest.TestCase):
+    neos: ClassVar[list[NearEarthObject]]
+    approaches: ClassVar[list[CloseApproach]]
+    db: ClassVar[NEODatabase]
+
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls)-> None:
         cls.neos = load_neos(TEST_NEO_FILE)
         cls.approaches = load_approaches(TEST_CAD_FILE)
         cls.db = NEODatabase(cls.neos, cls.approaches)
 
-    def test_database_construction_links_approaches_to_neos(self):
+    def test_database_construction_links_approaches_to_neos(self)-> None:
         for approach in self.approaches:
             self.assertIsNotNone(approach.neo)
 
-    def test_database_construction_ensures_each_neo_has_an_approaches_attribute(self):
+    def test_database_construction_ensures_each_neo_has_an_approaches_attribute(self)-> None:
         for neo in self.neos:
             self.assertTrue(hasattr(neo, 'approaches'))
 
-    def test_database_construction_ensures_neos_collectively_exhaust_approaches(self):
+    def test_database_construction_ensures_neos_collectively_exhaust_approaches(self)-> None:
         approaches = set()
         for neo in self.neos:
             approaches.update(neo.approaches)
         self.assertEqual(approaches, set(self.approaches))
 
-    def test_database_construction_ensures_neos_mutually_exclude_approaches(self):
+    def test_database_construction_ensures_neos_mutually_exclude_approaches(self)-> None:
         seen = set()
         for neo in self.neos:
             for approach in neo.approaches:
@@ -54,9 +61,10 @@ class TestDatabase(unittest.TestCase):
                     self.fail(f"{approach} appears in the approaches of multiple NEOs.")
                 seen.add(approach)
 
-    def test_get_neo_by_designation(self):
+    def test_get_neo_by_designation(self)-> None:
         cerberus = self.db.get_neo_by_designation('1865')
         self.assertIsNotNone(cerberus)
+        cerberus=cast(NearEarthObject,cerberus)
         self.assertEqual(cerberus.designation, '1865')
         self.assertEqual(cerberus.name, 'Cerberus')
         self.assertEqual(cerberus.diameter, 1.2)
@@ -64,6 +72,7 @@ class TestDatabase(unittest.TestCase):
 
         adonis = self.db.get_neo_by_designation('2101')
         self.assertIsNotNone(adonis)
+        adonis=cast(NearEarthObject,adonis)
         self.assertEqual(adonis.designation, '2101')
         self.assertEqual(adonis.name, 'Adonis')
         self.assertEqual(adonis.diameter, 0.60)
@@ -71,14 +80,16 @@ class TestDatabase(unittest.TestCase):
 
         tantalus = self.db.get_neo_by_designation('2102')
         self.assertIsNotNone(tantalus)
+        tantalus=cast(NearEarthObject,tantalus)
         self.assertEqual(tantalus.designation, '2102')
         self.assertEqual(tantalus.name, 'Tantalus')
         self.assertEqual(tantalus.diameter, 1.649)
         self.assertEqual(tantalus.hazardous, True)
 
-    def test_get_neo_by_designation_neos_with_year(self):
+    def test_get_neo_by_designation_neos_with_year(self)-> None:
         bs_2020 = self.db.get_neo_by_designation('2020 BS')
         self.assertIsNotNone(bs_2020)
+        bs_2020=cast(NearEarthObject,bs_2020)
         self.assertEqual(bs_2020.designation, '2020 BS')
         self.assertEqual(bs_2020.name, None)
         self.assertTrue(math.isnan(bs_2020.diameter))
@@ -86,18 +97,20 @@ class TestDatabase(unittest.TestCase):
 
         py1_2020 = self.db.get_neo_by_designation('2020 PY1')
         self.assertIsNotNone(py1_2020)
+        py1_2020=cast(NearEarthObject,py1_2020)
         self.assertEqual(py1_2020.designation, '2020 PY1')
         self.assertEqual(py1_2020.name, None)
         self.assertTrue(math.isnan(py1_2020.diameter))
         self.assertEqual(py1_2020.hazardous, False)
 
-    def test_get_neo_by_designation_missing(self):
+    def test_get_neo_by_designation_missing(self)-> None:
         nonexistent = self.db.get_neo_by_designation('not-real-designation')
         self.assertIsNone(nonexistent)
 
-    def test_get_neo_by_name(self):
+    def test_get_neo_by_name(self)-> None:
         lemmon = self.db.get_neo_by_name('Lemmon')
         self.assertIsNotNone(lemmon)
+        lemmon=cast(NearEarthObject,lemmon)
         self.assertEqual(lemmon.designation, '2013 TL117')
         self.assertEqual(lemmon.name, 'Lemmon')
         self.assertTrue(math.isnan(lemmon.diameter))
@@ -105,12 +118,13 @@ class TestDatabase(unittest.TestCase):
 
         jormungandr = self.db.get_neo_by_name('Jormungandr')
         self.assertIsNotNone(jormungandr)
+        jormungandr=cast(NearEarthObject,jormungandr)
         self.assertEqual(jormungandr.designation, '471926')
         self.assertEqual(jormungandr.name, 'Jormungandr')
         self.assertTrue(math.isnan(jormungandr.diameter))
         self.assertEqual(jormungandr.hazardous, True)
 
-    def test_get_neo_by_name_missing(self):
+    def test_get_neo_by_name_missing(self)-> None:
         nonexistent = self.db.get_neo_by_name('not-real-name')
         self.assertIsNone(nonexistent)
 

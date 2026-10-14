@@ -20,27 +20,27 @@ PROJECT_ROOT = pathlib.Path(__file__).parent.parent.resolve()
 
 
 class TestDataFiles(unittest.TestCase):
-    def setUp(self):
+    def setUp(self)-> None:
         self.data_root = PROJECT_ROOT / 'data'
         self.neo_file = self.data_root / 'neos.csv'
         self.cad_file = self.data_root / 'cad.json'
 
-    def test_data_files_exist(self):
+    def test_data_files_exist(self)-> None:
         self.assertTrue(self.neo_file.exists())
         self.assertTrue(self.cad_file.exists())
 
-    def test_data_files_are_readable(self):
+    def test_data_files_are_readable(self)-> None:
         self.assertTrue(os.access(self.neo_file, os.R_OK))
         self.assertTrue(os.access(self.cad_file, os.R_OK))
 
-    def test_data_files_are_not_empty(self):
+    def test_data_files_are_not_empty(self)-> None:
         try:
             self.assertTrue(self.neo_file.stat().st_size > 0, "Empty NEO file.")
             self.assertTrue(self.cad_file.stat().st_size > 0, "Empty CAD file.")
         except OSError:
             self.fail("Unexpected OSError.")
 
-    def test_data_files_are_well_formatted(self):
+    def test_data_files_are_well_formatted(self)-> None:
         # Check that the NEO data is CSV-formatted.
         try:
             with self.neo_file.open() as f:
