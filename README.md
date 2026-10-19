@@ -13,7 +13,7 @@ Look up an asteroid or comet, combine filters to investigate close approaches, a
 - Explore multiple queries in an interactive shell.
 - Receive clear errors for invalid filters, malformed input and failed exports.
 
-![Rich terminal table showing five potentially hazardous close approaches within 0.05 au during 2020.](data/query-preview.png)
+![Rich terminal table showing five close approaches from 2023 onwards for named objects with known diameters of at least 5 km.](data/query-preview.jpeg)
 
 ## Engineering highlights
 
